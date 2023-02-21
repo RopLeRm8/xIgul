@@ -1,14 +1,16 @@
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import { Typography } from "@mui/joy";
-import { Box, Button, Modal, TextField } from "@mui/material";
+import { Box, Button, Modal, TextField,Grid } from "@mui/material";
 import WebFont from "webfontloader";
+import "./css/App.css"
 // import { SnackbarProvider, useSnackbar } from "notistack";
 import { useCallback, useEffect, useState } from "react";
 function App() {
   // const { enqueueSnackbar } = useSnackbar();
   const [currUser, setcurrUser] = useState(null);
   const [open, setOpen] = useState(true);
+  const [cells, setCells] = useState(Array(9).fill(""));
   const handleChangeUser = (e) => {
     setcurrUser(e.target.value);
     console.log(currUser);
@@ -19,7 +21,6 @@ function App() {
   }, []);
   const handleSubmitName = () => {
     setOpen(false);
-    console.log(currUser);
   };
   useEffect(() => {
     WebFont.load({
@@ -28,8 +29,12 @@ function App() {
       },
     });
   }, []);
+  const Cell = ({ num }) => {
+    return <td onClick={() => handleClick(num)}>{cells[num]}</td>;
+  };
   return (
     // <SnackbarProvider maxSnack={3} translate="yes">
+    <>
     <Modal open={open} onClose={handleCloseModal} disableEscapeKeyDown>
       <Box
         sx={{
@@ -81,12 +86,12 @@ function App() {
           }}
         />
         <Button
-          variant="outlined"
-          color="success"
+          variant="contained"
+          color="inherit"
           size="small"
           sx={{ mt: 1, fontFamily: "Kanit", fontSize: "100%" }}
           disabled={
-            currUser?.length <= 3 || currUser?.length >= 10 || currUser === null
+            currUser?.length <= 3 || currUser?.length >= 15 || currUser === null
           }
           onClick={handleSubmitName}
           fullWidth
@@ -96,6 +101,33 @@ function App() {
         </Button>
       </Box>
     </Modal>
+    <Grid container direction = "column" justifyContent = "center" alignItems = "center">
+      <Grid item> 
+    <Typography>Tic tac Toe</Typography>
+    </Grid>
+    <Grid item>
+    <table className="">
+            <tbody>
+              <tr>
+                <Cell num={0} className="nonBorder" />
+                <Cell num={1} />
+                <Cell num={2} />
+              </tr>
+              <tr>
+                <Cell num={3} />
+                <Cell num={4} />
+                <Cell num={5} />
+              </tr>
+              <tr>
+                <Cell num={6} />
+                <Cell num={7} />
+                <Cell num={8} />
+              </tr>
+            </tbody>
+    </table>
+    </Grid>
+    </Grid>
+    </>
     // </SnackbarProvider>
   );
 }
