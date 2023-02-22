@@ -31,5 +31,17 @@
     "eslint": "^8.34.0",
     "eslint-plugin-react": "^7.32.2",
     "vite": "^4.1.2"
-  }
+  },
+  "description": "- Express JS [^1]\r - React JS [^2]\r - Material UI [^3]",
+  "main": "vite.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RopLeRm8/xIgul.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RopLeRm8/xIgul/issues"
+  },
+  "homepage": "https://github.com/RopLeRm8/xIgul#readme"
 }
