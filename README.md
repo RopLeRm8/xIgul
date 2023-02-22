@@ -25,6 +25,7 @@
 
 ## Instructions:
 - Navigate to the project's directory (/xIgul)
-- Enter the following commands (npm run dev/yarn dev) - NODEJS REQUIRED TO BE DOWNLOADED! OR YARN OPTIONALLY [NODEJS INSTALLATION](https://nodejs.org/en/) [YARN INSTALLATION](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable)
+- Enter the following commands (npm run dev/yarn dev) - NODEJS REQUIRED TO BE DOWNLOADED! OR YARN OPTIONALLY [NODEJS INSTALLATION](https://nodejs.org/en/) 
+ [YARN INSTALLATION](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable)
 - Enter your local IP (localhost:3000) and your mate will join the network written in the terminal after command entered (the third or second one)
 - Enjoy!
