@@ -1,19 +1,66 @@
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
-import { Typography } from "@mui/joy";
-import { Box, Button, Grid, Modal, TextField } from "@mui/material";
+import { Alert, Chip, CssVarsProvider, Typography } from "@mui/joy";
+import {
+  Box,
+  Button,
+  Grid,
+  List,
+  ListItem,
+  Modal,
+  TextField,
+} from "@mui/material";
+import io from "socket.io-client";
 import WebFont from "webfontloader";
 import "./css/App.css";
 // import { SnackbarProvider, useSnackbar } from "notistack";
 import { useCallback, useEffect, useState } from "react";
 
 const charactersArray = ["X", "O"];
+const socket = io("http://192.168.1.11:3000");
 function App() {
-  // const { enqueueSnackbar } = useSnackbar();
   const [currUser, setcurrUser] = useState(null);
   const [open, setOpen] = useState(true);
   const [cells, setCells] = useState(Array(9).fill(""));
   const [cellCharacter, setCellCharacter] = useState(null);
+  const [userNames, setUserNames] = useState([]);
+  const [localPlayer, setLocalPlayer] = useState();
+  const [enemyPlayer, setEnemyPlayer] = useState();
+  const [alert, setAlert] = useState("");
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log("Connected with ID:", socket.id);
+    });
+    socket.on("connectedUsers", (connected, id) => {
+      if (socket.id !== id) {
+        setAlert(
+          connected
+            ? `User ${id} joined`
+            : `User ${id} disconnected, waiting 4 seconds until he reconnects`
+        );
+      }
+      setTimeout(() => {
+        setAlert("");
+      }, 5000);
+    });
+    socket.on("startGame", (userNames) => {
+      setUserNames(userNames);
+      userNames.map((user) => {
+        if (user.isLocal && socket.id === user.id) {
+          setLocalPlayer(user);
+          setEnemyPlayer(userNames.find((u) => !u.isLocal) || null);
+        } else if (!user.isLocal && socket.id === user.id) {
+          setLocalPlayer(user);
+          setEnemyPlayer(userNames.find((u) => u.isLocal) || null);
+        }
+      });
+    });
+    socket.on("reloadPage", () => {
+      location.reload();
+    });
+  }, [localPlayer, enemyPlayer]);
+  // const { enqueueSnackbar } = useSnackbar();
+
   const handleChangeUser = (e) => {
     setcurrUser(e.target.value);
     console.log(currUser);
@@ -22,10 +69,15 @@ function App() {
     if (reason === "backdropClick") return;
     setOpen(false);
   }, []);
-  const handleSubmitName = () => {
+  const handleSubmitName = (e) => {
+    e.preventDefault();
     setOpen(false);
     const rand = Math.floor(Math.random() * charactersArray.length);
     setCellCharacter(charactersArray[rand]);
+
+    if (currUser) {
+      socket.emit("setUserName", currUser);
+    }
   };
   useEffect(() => {
     WebFont.load({
@@ -57,6 +109,7 @@ function App() {
   return (
     // <SnackbarProvider maxSnack={3} translate="yes">
     <>
+      <CssVarsProvider />
       <Modal open={open} onClose={handleCloseModal} disableEscapeKeyDown>
         <Box
           sx={{
@@ -133,20 +186,42 @@ function App() {
         sx={{ height: "80vh" }}
         spacing={3}
       >
-        <Grid item>
-          <Typography
-            sx={{ fontSize: "250%", display: open ? "none" : "flex" }}
+        {alert ? (
+          <Alert
+            color={
+              alert.substring(alert.length - 6) === "joined"
+                ? "success"
+                : "danger"
+            }
+            variant="outlined"
+            sx={{ mb: 1 }}
           >
-            NickName: {currUser}
-          </Typography>
-        </Grid>
-        <Grid item>
-          <Typography
-            sx={{ fontSize: "220%", display: open ? "none" : "flex" }}
-          >
-            Enemy: {currUser}
-          </Typography>
-        </Grid>
+            {alert}
+          </Alert>
+        ) : null}
+        {userNames && userNames.length > 1 ? (
+          <>
+            <Grid item>
+              <Typography
+                sx={{ fontSize: "250%", display: open ? "none" : "flex" }}
+              >
+                {localPlayer.username && `Username : ${localPlayer.username}`}
+              </Typography>
+            </Grid>
+            <Grid item>
+              <Typography
+                sx={{ fontSize: "250%", display: open ? "none" : "flex" }}
+              >
+                {enemyPlayer.username && `Enemy : ${enemyPlayer.username}`}
+              </Typography>
+            </Grid>
+          </>
+        ) : (
+          <Chip variant="solid" color="info" size="lg" title="hello">
+            Waiting for players...
+          </Chip>
+        )}
+
         <Grid item>
           <Typography sx={{ fontSize: "150%" }}>Tic tac Toe</Typography>
         </Grid>

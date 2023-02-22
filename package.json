@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build",
     "preview": "vite preview",
-    "client": "vite",
+    "client": "vite --host",
     "server": "node ./src/server/server.js",
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },
@@ -22,6 +22,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "socket.io": "^4.6.1",
+    "socket.io-client": "^4.6.1",
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
