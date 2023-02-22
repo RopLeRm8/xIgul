@@ -21,3 +21,10 @@
 # ABOUT
 
 > The project main task is to implement a famous tic-tac-toe game into a web application where 2 players can compete on the same LAN versus each other.
+
+
+## Instructions:
+- Navigate to the project's directory (/xIgul)
+- Enter the following commans (npm run dev/yarn dev) ("NODEJS INSTALLATION")[https://nodejs.org/en/]
+- Enter your local IP (localhost:3000) and your mate will join the network written in the terminal after command entered (the third or second one)
+- Enjoy!
