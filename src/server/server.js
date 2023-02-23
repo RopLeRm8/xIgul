@@ -13,6 +13,7 @@ let playerUserNames = {};
 let userNames
 let timeoutId;
 io.on('connection', (socket) => {
+  console.log(usersCount)
   if(usersCount >= 4){  
     socket.disconnect();
     console.log('too much users')
@@ -22,11 +23,10 @@ io.on('connection', (socket) => {
     clearTimeout(timeoutId);
   }
   usersCount = usersCount + 1
-  io.emit('connectedUsers',true,socket.id);
+  io.emit('connectedUsers',true,socket.id,socket.handshake.address.substring(7));
   
 
 
-  
   socket.on("setUserName", (userName) => {
     playerUserNames[socket.id] = {
       username: userName,

@@ -1,12 +1,10 @@
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
-import { Alert, Chip, CssVarsProvider, Typography } from "@mui/joy";
+import { Alert, Button, Chip, CssVarsProvider, Typography } from "@mui/joy";
 import {
   Box,
-  Button,
   Grid,
-  List,
-  ListItem,
+  Button as MUIButton,
   Modal,
   TextField,
 } from "@mui/material";
@@ -17,7 +15,7 @@ import "./css/App.css";
 import { useCallback, useEffect, useState } from "react";
 
 const charactersArray = ["X", "O"];
-const socket = io("http://192.168.1.11:3000");
+const socket = io("http://10.9.23.6:3000");
 function App() {
   const [currUser, setcurrUser] = useState(null);
   const [open, setOpen] = useState(true);
@@ -28,18 +26,22 @@ function App() {
   const [enemyPlayer, setEnemyPlayer] = useState();
   const [alert, setAlert] = useState("");
   useEffect(() => {
+    let timeout;
     socket.on("connect", () => {
       console.log("Connected with ID:", socket.id);
     });
-    socket.on("connectedUsers", (connected, id) => {
+    socket.on("connectedUsers", (connected, id, addr) => {
       if (socket.id !== id) {
         setAlert(
           connected
-            ? `User ${id} joined`
+            ? `User ${id} with IP ${addr} joined`
             : `User ${id} disconnected, waiting 4 seconds until he reconnects`
         );
       }
-      setTimeout(() => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+      timeout = setTimeout(() => {
         setAlert("");
       }, 5000);
     });
@@ -160,7 +162,7 @@ function App() {
               },
             }}
           />
-          <Button
+          <MUIButton
             variant="contained"
             color="inherit"
             size="small"
@@ -175,7 +177,7 @@ function App() {
             startIcon={<ThumbUpAltIcon />}
           >
             CONFIRM
-          </Button>
+          </MUIButton>
         </Box>
       </Modal>
       <Grid
@@ -217,9 +219,21 @@ function App() {
             </Grid>
           </>
         ) : (
-          <Chip variant="solid" color="info" size="lg" title="hello">
-            Waiting for players...
-          </Chip>
+          <Box sx={{ display: "flex", zIndex: 1350 }}>
+            <Chip variant="solid" color="info" size="lg" title="hello">
+              <Button
+                variant="plain"
+                loadingPosition="start"
+                loading
+                size="sm"
+                sx={{ mr: 1 }}
+              >
+                <Typography sx={{ color: "white" }}>
+                  Waiting for players...
+                </Typography>
+              </Button>
+            </Chip>
+          </Box>
         )}
 
         <Grid item>
