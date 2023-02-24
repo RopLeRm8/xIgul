@@ -1,6 +1,6 @@
 # XIgul Project
 
-## Fullstack project
+## Technologies used | FULLSTACK
 
 - Express JS [^1]
 - React JS [^2]
@@ -29,5 +29,5 @@
 #### [NODEJS INSTALLATION](https://nodejs.org/en/) 
 #### OR
 #### [YARN INSTALLATION](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable)
-- Enter your local IP (localhost:5173) and your mate will join the network written in the terminal after command entered (the third or second one)
+- Enter your local IP (localhost:5173) as a link in the web browser and your mate will join the network written in the terminal after command entered (the third or second one), as a link in the web browser either.
 - Enjoy!
