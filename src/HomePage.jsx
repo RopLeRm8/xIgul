@@ -60,14 +60,15 @@ function App() {
     socket.on("reloadPage", () => {
       location.reload();
     });
-    setInterval(() => {
-      console.log(localPlayer?.ishesturn);
-    }, 1000);
+    socket.on("sendTurnBroadcast", (num, simanGiven) => {
+      setCells((prev) => ({
+        ...prev,
+        [num]: { siman: simanGiven, isActive: true },
+      }));
+    });
   }, [localPlayer, enemyPlayer]);
   // const { enqueueSnackbar } = useSnackbar();
 
-  console.log("enemy:" + enemyPlayer?.whatside);
-  console.log("enemy:" + enemyPlayer?.ishesturn);
   const handleChangeUser = (e) => {
     setcurrUser(e.target.value);
   };
@@ -91,30 +92,36 @@ function App() {
       },
     });
   }, []);
-  const Cell = ({ num }) => {
-    return (
-      <td
-        onClick={() => {
-          if (!enemyPlayer?.ishesturn) {
-            setCells((prev) => ({ ...prev, [num]: true }));
-            enemyPlayer.ishesturn = true;
-            localPlayer.ishesturn = false;
-          }
-        }}
-        style={{ width: "7vmax" }}
-      >
-        <Box
-          className="bounce-in-fwd"
-          sx={{
-            display: cells[num] ? "flex" : "none",
-            justifyContent: "center",
+  const Cell = useCallback(
+    ({ num }) => {
+      return (
+        <td
+          onClick={() => {
+            if (!cells[num]) {
+              setCells((prev) => ({
+                ...prev,
+                [num]: { siman: localPlayer?.whatside, isActive: true },
+              }));
+              socket.emit("sendTurn", num, localPlayer?.whatside);
+            }
           }}
+          style={{ width: "7vmax" }}
         >
-          {localPlayer?.whatside}
-        </Box>
-      </td>
-    );
-  };
+          <Box
+            className="bounce-in-fwd"
+            sx={{
+              display: cells[num]?.isActive ? "flex" : "none",
+              justifyContent: "center",
+              color: "black",
+            }}
+          >
+            {cells[num]?.siman}
+          </Box>
+        </td>
+      );
+    },
+    [cells, socket, localPlayer]
+  );
   return (
     // <SnackbarProvider maxSnack={3} translate="yes">
     <>
@@ -140,6 +147,7 @@ function App() {
               justifyContent: "center",
               fontSize: "250%",
               fontFamily: "Kanit",
+              whiteSpace: "nowrap",
             }}
           >
             Welcome to xIgul
@@ -212,16 +220,39 @@ function App() {
           <>
             <Grid item>
               <Typography
-                sx={{ fontSize: "250%", display: open ? "none" : "flex" }}
+                sx={{
+                  fontSize: "200%",
+                  display: open ? "none" : "flex",
+                  color: "green",
+                  fontFamily: "Kanit",
+                }}
               >
-                {localPlayer?.username && `Username : ${localPlayer?.username}`}
+                {localPlayer?.username &&
+                  `${localPlayer?.username} | ${localPlayer?.whatside} symbol`}
               </Typography>
             </Grid>
             <Grid item>
               <Typography
-                sx={{ fontSize: "250%", display: open ? "none" : "flex" }}
+                sx={{
+                  fontSize: "150%",
+                  display: open ? "none" : "flex",
+                  fontFamily: "Kanit",
+                }}
               >
-                {enemyPlayer?.username && `Enemy : ${enemyPlayer?.username}`}
+                VERSUS
+              </Typography>
+            </Grid>
+            <Grid item>
+              <Typography
+                sx={{
+                  fontSize: "200%",
+                  display: open ? "none" : "flex",
+                  color: "red",
+                  fontFamily: "Kanit",
+                }}
+              >
+                {enemyPlayer?.username &&
+                  `${enemyPlayer?.username} | ${enemyPlayer?.whatside} symbol`}
               </Typography>
             </Grid>
           </>
@@ -246,12 +277,18 @@ function App() {
         )}
 
         <Grid item>
-          <Typography ref={turns} sx={{ fontSize: "150%" }}>
+          <Typography
+            ref={turns}
+            sx={{
+              fontSize: "150%",
+              display: localPlayer !== undefined ? "flex" : "none",
+              fontWeight: 700,
+            }}
+          >
             {localPlayer?.ishesturn
-              ? `${localPlayer?.username}'s turn`
+              ? "Your turn"
               : `${enemyPlayer?.username}'s turn`}
           </Typography>
-          <Typography sx={{ fontSize: "150%" }}>Tic tac Toe Game</Typography>
         </Grid>
         <Grid item>
           <table className="">
