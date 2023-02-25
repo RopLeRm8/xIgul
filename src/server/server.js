@@ -13,7 +13,7 @@ let playerUserNames = {};
 let userNames;
 let timeoutId;
 io.on("connection", (socket) => {
-  if (usersCount >= 4) {
+  if (usersCount >= 8) {
     socket.disconnect();
     console.log("too much users");
     return;
@@ -62,7 +62,13 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("sendTurn", (num, siman) => {
-    io.emit("sendTurnBroadcast", num, siman);
+    let foundUser = userNames.find((user) => user.whatside === siman);
+    let enemyUser = userNames.find((user) => user.whatside !== siman);
+    if (foundUser.ishesturn) {
+      foundUser.ishesturn = !foundUser.ishesturn;
+      enemyUser.ishesturn = !enemyUser.ishesturn;
+      io.emit("sendTurnBroadcast", num, siman, userNames);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -71,7 +77,7 @@ io.on("connection", (socket) => {
     playerUserNames = {};
     io.emit("connectedUsers", false, socket.id);
     timeoutId = setTimeout(() => {
-      io.emit("reloadPage");
+      socket.broadcast.emit("reloadPage");
     }, 4000);
   });
 });

@@ -60,13 +60,28 @@ function App() {
     socket.on("reloadPage", () => {
       location.reload();
     });
-    socket.on("sendTurnBroadcast", (num, simanGiven) => {
+    socket.on("sendTurnBroadcast", (num, simanGiven, userNamesGiven) => {
+      turns.current.classList.add("bounce-in-fwd");
+      setTimeout(() => {
+        turns.current.classList.remove("bounce-in-fwd");
+      }, 500);
+      userNamesGiven.map((user) => {
+        if (user.isLocal && socket.id === user.id) {
+          setLocalPlayer((prev) => ({ ...prev, ishesturn: user.ishesturn }));
+          setEnemyPlayer((prev) => ({ ...prev, ishesturn: !user.ishesturn }));
+        } else if (!user.isLocal && socket.id === user.id) {
+          setLocalPlayer((prev) => ({ ...prev, ishesturn: user.ishesturn }));
+          setEnemyPlayer((prev) => ({ ...prev, ishesturn: !user.ishesturn }));
+        }
+      });
+
+      console.log(localPlayer, enemyPlayer);
       setCells((prev) => ({
         ...prev,
         [num]: { siman: simanGiven, isActive: true },
       }));
     });
-  }, [localPlayer, enemyPlayer]);
+  }, [localPlayer, enemyPlayer, cells]);
   // const { enqueueSnackbar } = useSnackbar();
 
   const handleChangeUser = (e) => {
@@ -97,7 +112,7 @@ function App() {
       return (
         <td
           onClick={() => {
-            if (!cells[num]) {
+            if (!cells[num] && localPlayer?.ishesturn) {
               setCells((prev) => ({
                 ...prev,
                 [num]: { siman: localPlayer?.whatside, isActive: true },
@@ -108,7 +123,6 @@ function App() {
           style={{ width: "7vmax" }}
         >
           <Box
-            className="bounce-in-fwd"
             sx={{
               display: cells[num]?.isActive ? "flex" : "none",
               justifyContent: "center",
@@ -227,8 +241,7 @@ function App() {
                   fontFamily: "Kanit",
                 }}
               >
-                {localPlayer?.username &&
-                  `${localPlayer?.username} | ${localPlayer?.whatside} symbol`}
+                You {`[${localPlayer?.whatside}]`}
               </Typography>
             </Grid>
             <Grid item>
@@ -252,7 +265,7 @@ function App() {
                 }}
               >
                 {enemyPlayer?.username &&
-                  `${enemyPlayer?.username} | ${enemyPlayer?.whatside} symbol`}
+                  `${enemyPlayer?.username} [${enemyPlayer?.whatside}]`}
               </Typography>
             </Grid>
           </>
