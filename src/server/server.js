@@ -47,7 +47,7 @@ const setstarterturn=()=>{
     };
     userNames = Object.values(playerUserNames);
     if (userNames.length === 2) {
-      const sides=setchartoplayers();
+    const sides=setchartoplayers();
     const turns=setstarterturn();
     for(let pos=0; pos<userNames.length; pos++){
       userNames[pos].whatside=sides[pos];

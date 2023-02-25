@@ -60,6 +60,9 @@ function App() {
     socket.on("reloadPage", () => {
       location.reload();
     });
+    setInterval(() => {
+      console.log(localPlayer?.ishesturn);
+    }, 1000);
   }, [localPlayer, enemyPlayer]);
   // const { enqueueSnackbar } = useSnackbar();
 
@@ -92,7 +95,7 @@ function App() {
     return (
       <td
         onClick={() => {
-          if (enemyPlayer?.ishesturn === false) {
+          if (!enemyPlayer?.ishesturn) {
             setCells((prev) => ({ ...prev, [num]: true }));
             enemyPlayer.ishesturn = true;
             localPlayer.ishesturn = false;
@@ -243,9 +246,8 @@ function App() {
         )}
 
         <Grid item>
-          <Typography sx={{ fontSize: "150%" }}>Tic tac Toe</Typography>
           <Typography ref={turns} sx={{ fontSize: "150%" }}>
-            {localPlayer?.ishesturn === true
+            {localPlayer?.ishesturn
               ? `${localPlayer?.username}'s turn`
               : `${enemyPlayer?.username}'s turn`}
           </Typography>
