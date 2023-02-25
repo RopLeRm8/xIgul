@@ -224,21 +224,23 @@ function App() {
             </Grid>
           </>
         ) : (
-          <Box sx={{ display: "flex", zIndex: 1350 }}>
-            <Chip variant="solid" color="info" size="lg" title="hello">
-              <Button
-                variant="plain"
-                loadingPosition="start"
-                loading
-                size="sm"
-                sx={{ mr: 1 }}
-              >
-                <Typography sx={{ color: "white" }}>
-                  Waiting for players...
-                </Typography>
-              </Button>
-            </Chip>
-          </Box>
+          <>
+            <Box sx={{ display: "flex" }}>
+              <Chip variant="solid" color="info" size="sm">
+                <Button
+                  variant="plain"
+                  loadingPosition="start"
+                  loading
+                  size="sm"
+                  sx={{ mr: 1 }}
+                >
+                  <Typography sx={{ color: "white" }}>
+                    Waiting for players...
+                  </Typography>
+                </Button>
+              </Chip>
+            </Box>
+          </>
         )}
 
         <Grid item>
@@ -248,6 +250,7 @@ function App() {
               ? `${localPlayer?.username}'s turn`
               : `${enemyPlayer?.username}'s turn`}
           </Typography>
+          <Typography sx={{ fontSize: "150%" }}>Tic tac Toe Game</Typography>
         </Grid>
         <Grid item>
           <table className="">
