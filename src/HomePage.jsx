@@ -15,7 +15,7 @@ import "./css/App.css";
 import { useCallback, useEffect, useState } from "react";
 
 const charactersArray = ["X", "O"];
-const socket = io("http://10.9.23.6:3000");
+const socket = io("http://192.168.1.11:3000");
 function App() {
   const [currUser, setcurrUser] = useState(null);
   const [open, setOpen] = useState(true);
@@ -25,6 +25,7 @@ function App() {
   const [localPlayer, setLocalPlayer] = useState();
   const [enemyPlayer, setEnemyPlayer] = useState();
   const [alert, setAlert] = useState("");
+  const turns = useRef();
   useEffect(() => {
     let timeout;
     socket.on("connect", () => {
@@ -63,9 +64,10 @@ function App() {
   }, [localPlayer, enemyPlayer]);
   // const { enqueueSnackbar } = useSnackbar();
 
+  console.log("enemy:" + enemyPlayer?.whatside);
+  console.log("enemy:" + enemyPlayer?.ishesturn);
   const handleChangeUser = (e) => {
     setcurrUser(e.target.value);
-    console.log(currUser);
   };
   const handleCloseModal = useCallback((_, reason) => {
     if (reason === "backdropClick") return;
@@ -74,13 +76,12 @@ function App() {
   const handleSubmitName = (e) => {
     e.preventDefault();
     setOpen(false);
-    const rand = Math.floor(Math.random() * charactersArray.length);
-    setCellCharacter(charactersArray[rand]);
 
     if (currUser) {
       socket.emit("setUserName", currUser);
     }
   };
+
   useEffect(() => {
     WebFont.load({
       google: {
@@ -92,7 +93,11 @@ function App() {
     return (
       <td
         onClick={() => {
-          setCells((prev) => ({ ...prev, [num]: true }));
+          if (enemyPlayer?.ishesturn === false) {
+            setCells((prev) => ({ ...prev, [num]: true }));
+            enemyPlayer.ishesturn = true;
+            localPlayer.ishesturn = false;
+          }
         }}
         style={{ width: "7vmax" }}
       >
@@ -103,7 +108,7 @@ function App() {
             justifyContent: "center",
           }}
         >
-          {cellCharacter}
+          {localPlayer?.whatside}
         </Box>
       </td>
     );
@@ -207,14 +212,14 @@ function App() {
               <Typography
                 sx={{ fontSize: "250%", display: open ? "none" : "flex" }}
               >
-                {localPlayer.username && `Username : ${localPlayer.username}`}
+                {localPlayer?.username && `Username : ${localPlayer?.username}`}
               </Typography>
             </Grid>
             <Grid item>
               <Typography
                 sx={{ fontSize: "250%", display: open ? "none" : "flex" }}
               >
-                {enemyPlayer.username && `Enemy : ${enemyPlayer.username}`}
+                {enemyPlayer?.username && `Enemy : ${enemyPlayer?.username}`}
               </Typography>
             </Grid>
           </>
@@ -238,6 +243,11 @@ function App() {
 
         <Grid item>
           <Typography sx={{ fontSize: "150%" }}>Tic tac Toe</Typography>
+          <Typography ref={turns} sx={{ fontSize: "150%" }}>
+            {localPlayer?.ishesturn === true
+              ? `${localPlayer?.username}'s turn`
+              : `${enemyPlayer?.username}'s turn`}
+          </Typography>
         </Grid>
         <Grid item>
           <table className="">

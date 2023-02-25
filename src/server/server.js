@@ -13,7 +13,6 @@ let playerUserNames = {};
 let userNames
 let timeoutId;
 io.on('connection', (socket) => {
-  console.log(usersCount)
   if(usersCount >= 4){  
     socket.disconnect();
     console.log('too much users')
@@ -27,6 +26,7 @@ io.on('connection', (socket) => {
   
 
 
+  
   socket.on("setUserName", (userName) => {
     playerUserNames[socket.id] = {
       username: userName,
@@ -35,10 +35,15 @@ io.on('connection', (socket) => {
     };
     userNames = Object.values(playerUserNames);
     if (userNames.length === 2) {
+      const sides=setchartoplayers();
+    const turns=setstarterturn();
+    for(let pos=0; pos<userNames.length; pos++){
+      userNames[pos].whatside=sides[pos];
+      userNames[pos].ishesturn=turns[pos];
+    }
       io.emit("startGame", userNames);
     }
   });
-
 
   socket.on('disconnect', () => {
     usersCount = usersCount - 1
@@ -59,5 +64,6 @@ app.listen(PORT, (err)=>{
     console.warn('bad')
   }
 })
+
 
 
