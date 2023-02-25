@@ -24,8 +24,20 @@ io.on('connection', (socket) => {
   usersCount = usersCount + 1
   io.emit('connectedUsers',true,socket.id,socket.handshake.address.substring(7));
   
-
-
+const setchartoplayers=()=>{
+  const charList = ['X', 'O'];
+  const randomnumtochoose = Math.floor(Math.random() * 2);
+  const firstChar = charList[randomnumtochoose];
+  const secondChar = charList[randomnumtochoose === 0 ? 1 : 0];
+  return [firstChar, secondChar];
+};
+const setstarterturn=()=>{
+  const turnlist = [true, false];
+  const randnumturn = Math.floor(Math.random() * 2);
+  const p1turn = turnlist[randnumturn];
+  const p2turn = turnlist[randnumturn === 0 ? 1 : 0];
+  return [p1turn,p2turn];
+};
   
   socket.on("setUserName", (userName) => {
     playerUserNames[socket.id] = {
@@ -64,6 +76,3 @@ app.listen(PORT, (err)=>{
     console.warn('bad')
   }
 })
-
-
-

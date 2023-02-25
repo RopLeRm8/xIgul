@@ -12,15 +12,14 @@ import io from "socket.io-client";
 import WebFont from "webfontloader";
 import "./css/App.css";
 // import { SnackbarProvider, useSnackbar } from "notistack";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-const charactersArray = ["X", "O"];
-const socket = io("http://192.168.1.11:3000");
+const socket = io("http://192.168.1.13:3000");
 function App() {
   const [currUser, setcurrUser] = useState(null);
   const [open, setOpen] = useState(true);
   const [cells, setCells] = useState(Array(9).fill(""));
-  const [cellCharacter, setCellCharacter] = useState(null);
+  // const [cellCharacter, setCellCharacter] = useState(null);
   const [userNames, setUserNames] = useState([]);
   const [localPlayer, setLocalPlayer] = useState();
   const [enemyPlayer, setEnemyPlayer] = useState();
