@@ -14,7 +14,7 @@ import "./css/App.css";
 // import { SnackbarProvider, useSnackbar } from "notistack";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const socket = io("http://192.168.1.13:3000");
+const socket = io("http://192.168.0.102:3000");
 function App() {
   const [currUser, setcurrUser] = useState(null);
   const [open, setOpen] = useState(true);
@@ -24,6 +24,8 @@ function App() {
   const [localPlayer, setLocalPlayer] = useState();
   const [enemyPlayer, setEnemyPlayer] = useState();
   const [alert, setAlert] = useState("");
+  const [winnerModalOpen, setWinnerModalOpen] = useState(false)
+  const [winnerName, setWinnerName] = useState("")
   const turns = useRef();
   useEffect(() => {
     let timeout;
@@ -109,32 +111,43 @@ function App() {
   }, []);
   const Cell = useCallback(
     ({ num }) => {
+      const [localCells, setLocalCells] = useState(cells);
+  
+      useEffect(() => {
+        if (localCells !== cells) {
+          socket.emit("sendTurn", num, localPlayer?.whatside);
+          socket.emit("checkwinner", localCells);
+          socket.on("winnerfound", (username) => {
+            setWinnerName(username === localPlayer?.username ? "you win" : `${username} wins`);
+            setWinnerModalOpen(true);
+          });
+        }
+      }, [localCells, localPlayer, socket, setWinnerName, setWinnerModalOpen]);
+  
+      const handleClick = () => {
+        if (!localCells[num] && localPlayer?.ishesturn) {
+          setLocalCells((prev) => ({
+            ...prev,
+            [num]: { siman: localPlayer?.whatside, isActive: true },
+          }));
+        }
+      };
+  
       return (
-        <td
-          onClick={() => {
-            if (!cells[num] && localPlayer?.ishesturn) {
-              setCells((prev) => ({
-                ...prev,
-                [num]: { siman: localPlayer?.whatside, isActive: true },
-              }));
-              socket.emit("sendTurn", num, localPlayer?.whatside);
-            }
-          }}
-          style={{ width: "7vmax" }}
-        >
+        <td onClick={handleClick} style={{ width: "7vmax" }}>
           <Box
             sx={{
-              display: cells[num]?.isActive ? "flex" : "none",
+              display: localCells[num]?.isActive ? "flex" : "none",
               justifyContent: "center",
               color: "black",
             }}
           >
-            {cells[num]?.siman}
+            {localCells[num]?.siman}
           </Box>
         </td>
       );
     },
-    [cells, socket, localPlayer]
+    [cells, socket, localPlayer, setWinnerName, setWinnerModalOpen]
   );
   return (
     // <SnackbarProvider maxSnack={3} translate="yes">
@@ -294,7 +307,7 @@ function App() {
             ref={turns}
             sx={{
               fontSize: "150%",
-              display: localPlayer !== undefined ? "flex" : "none",
+              display: localPlayer !== undefined && !winnerName ? "flex" : "none",
               fontWeight: 700,
             }}
           >
@@ -325,6 +338,37 @@ function App() {
           </table>
         </Grid>
       </Grid>
+
+
+
+      <Modal open={winnerModalOpen} disableEscapeKeyDown>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "30vmax",
+                    bgcolor: "background.paper",
+                    border: "2px solid #000",
+                    boxShadow: 24,
+                    p: 6,
+                    borderRadius: "15px",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      fontSize: "250%",
+                      fontFamily: "Kanit",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {winnerName ? winnerName : null}
+                  </Typography>
+                  </Box>
+                  </Modal>
     </>
     // </SnackbarProvider>
   );

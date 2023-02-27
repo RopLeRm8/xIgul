@@ -70,6 +70,14 @@ io.on("connection", (socket) => {
       io.emit("sendTurnBroadcast", num, siman, userNames);
     }
   });
+  socket.on("checkwinner", (table) => {
+    for (let pos = 0; pos < userNames?.length; pos++) {
+    if((table[0].siman===userNames[pos].whatside && table[1].siman===userNames[pos].whatside && table[2].siman===userNames[pos].whatside) || (table[3].siman===userNames[pos].whatside && table[4].siman===userNames[pos].whatside && table[5].siman===userNames[pos].whatside) || (table[6].siman===userNames[pos].whatside && table[7].siman===userNames[pos].whatside && table[8].siman===userNames[pos].whatside) || (table[0].siman===userNames[pos].whatside && table[3].siman===userNames[pos].whatside && table[6].siman===userNames[pos].whatside) || (table[1].siman===userNames[pos].whatside && table[4].siman===userNames[pos].whatside && table[7].siman===userNames[pos].whatside) || (table[2].siman===userNames[pos].whatside && table[5].siman===userNames[pos].whatside && table[8].siman===userNames[pos].whatside) || (table[0].siman===userNames[pos].whatside && table[4].siman===userNames[pos].whatside && table[8].siman===userNames[pos].whatside) || (table[2].siman===userNames[pos].whatside && table[4].siman===userNames[pos].whatside && table[6].siman===userNames[pos].whatside)){
+      io.emit("winnerfound", userNames[pos]?.username);
+      break;
+    }
+    }
+  });
 
   socket.on("disconnect", () => {
     usersCount = usersCount - 1;
