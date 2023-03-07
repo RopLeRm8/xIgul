@@ -14,7 +14,7 @@ import "./css/App.css";
 // import { SnackbarProvider, useSnackbar } from "notistack";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const socket = io("http://192.168.1.13:3000");
+const socket = io("http://127.0.0.1:3000");
 function App() {
   const [currUser, setcurrUser] = useState(null);
   const [open, setOpen] = useState(true);

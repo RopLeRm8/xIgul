@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "client": "vite --host",
     "server": "node ./src/server/server.js",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "play": "concurrently \"npm run server\" \"npm run client\""
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",
