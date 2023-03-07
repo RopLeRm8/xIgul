@@ -14,38 +14,38 @@ import "./css/App.css";
 // import { SnackbarProvider, useSnackbar } from "notistack";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const socket = io("http://192.168.0.102:3000");
+const socket = io("http://192.168.1.13:3000");
 function App() {
   const [currUser, setcurrUser] = useState(null);
   const [open, setOpen] = useState(true);
   const [cells, setCells] = useState(Array(9).fill(""));
   // const [cellCharacter, setCellCharacter] = useState(null);
   const [userNames, setUserNames] = useState([]);
+  const [error, setError] = useState("");
+  const [sessionID, setSessionID] = useState("");
   const [localPlayer, setLocalPlayer] = useState();
   const [enemyPlayer, setEnemyPlayer] = useState();
   const [alert, setAlert] = useState("");
-  const [winnerModalOpen, setWinnerModalOpen] = useState(false)
-  const [winnerName, setWinnerName] = useState("")
+  const [winnerModalOpen, setWinnerModalOpen] = useState(false);
+  const [winnerName, setWinnerName] = useState("");
   const turns = useRef();
   useEffect(() => {
     let timeout;
-    socket.on("connect", () => {
-      console.log("Connected with ID:", socket.id);
-    });
-    socket.on("connectedUsers", (connected, id, addr) => {
-      if (socket.id !== id) {
-        setAlert(
-          connected
-            ? `User ${id} with IP ${addr} joined`
-            : `User ${id} disconnected, waiting 4 seconds until he reconnects`
-        );
-      }
+    socket.on("connectedUsers", (connected, username) => {
+      setAlert(
+        connected ? `User ${username} joined` : `User ${username} disconnected`
+      );
+
       if (timeout) {
         clearTimeout(timeout);
       }
       timeout = setTimeout(() => {
         setAlert("");
       }, 5000);
+      if (!connected) {
+        setCells(Array(9).fill(""));
+        localPlayer.ishesturn = false;
+      }
     });
     socket.on("startGame", (userNames) => {
       setUserNames(userNames);
@@ -59,8 +59,9 @@ function App() {
         }
       });
     });
-    socket.on("reloadPage", () => {
-      location.reload();
+    socket.on("sendError", () => {
+      setOpen(true);
+      setError("The room you trying to enter is full");
     });
     socket.on("sendTurnBroadcast", (num, simanGiven, userNamesGiven) => {
       turns.current.classList.add("bounce-in-fwd");
@@ -77,7 +78,6 @@ function App() {
         }
       });
 
-      console.log(localPlayer, enemyPlayer);
       setCells((prev) => ({
         ...prev,
         [num]: { siman: simanGiven, isActive: true },
@@ -95,10 +95,10 @@ function App() {
   }, []);
   const handleSubmitName = (e) => {
     e.preventDefault();
-    setOpen(false);
 
+    setOpen(false);
     if (currUser) {
-      socket.emit("setUserName", currUser);
+      socket.emit("setUserName", currUser, sessionID);
     }
   };
 
@@ -112,18 +112,26 @@ function App() {
   const Cell = useCallback(
     ({ num }) => {
       const [localCells, setLocalCells] = useState(cells);
-  
+
       useEffect(() => {
         if (localCells !== cells) {
-          socket.emit("sendTurn", num, localPlayer?.whatside);
-          socket.emit("checkwinner", localCells);
+          socket.emit("sendTurn", num, localPlayer?.whatside, sessionID);
+          socket.emit("checkwinner", localCells, sessionID);
           socket.on("winnerfound", (username) => {
-            setWinnerName(username === localPlayer?.username ? "you win" : `${username} wins`);
+            if (typeof username === "boolean") {
+              setWinnerName("TIE!");
+            } else {
+              setWinnerName(
+                username === localPlayer?.username
+                  ? "you win"
+                  : `${username} wins`
+              );
+            }
             setWinnerModalOpen(true);
           });
         }
       }, [localCells, localPlayer, socket, setWinnerName, setWinnerModalOpen]);
-  
+
       const handleClick = () => {
         if (!localCells[num] && localPlayer?.ishesturn) {
           setLocalCells((prev) => ({
@@ -132,7 +140,7 @@ function App() {
           }));
         }
       };
-  
+
       return (
         <td onClick={handleClick} style={{ width: "7vmax" }}>
           <Box
@@ -153,6 +161,17 @@ function App() {
     // <SnackbarProvider maxSnack={3} translate="yes">
     <>
       <CssVarsProvider />
+      {sessionID && !open ? (
+        <Typography
+          sx={{
+            fontSize: "200%",
+            color: "green",
+            fontFamily: "Kanit",
+          }}
+        >
+          Session ID: {sessionID}
+        </Typography>
+      ) : null}
       <Modal open={open} onClose={handleCloseModal} disableEscapeKeyDown>
         <Box
           sx={{
@@ -204,6 +223,39 @@ function App() {
               },
             }}
           />
+          <TextField
+            sx={{ mt: 2 }}
+            placeholder="Session ID - 4 numbers atleast"
+            type="number"
+            variant="standard"
+            fullWidth
+            inputProps={{
+              style: {
+                textAlign: "center",
+                fontFamily: "Kanit",
+                fontSize: "100%",
+              },
+            }}
+            value={sessionID}
+            onChange={(e) => setSessionID(e.target.value)}
+          />
+          {error ? (
+            <Chip
+              variant="solid"
+              color="danger"
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                fontFamily: "Kanit",
+                fontSize: "120%",
+                textAlign: "center",
+                mt: 2,
+                borderRadius: "0px",
+              }}
+            >
+              {error}
+            </Chip>
+          ) : null}
           <MUIButton
             variant="contained"
             color="inherit"
@@ -212,7 +264,8 @@ function App() {
             disabled={
               currUser?.length <= 3 ||
               currUser?.length >= 15 ||
-              currUser === null
+              currUser === null ||
+              sessionID?.length <= 3
             }
             onClick={handleSubmitName}
             fullWidth
@@ -307,7 +360,10 @@ function App() {
             ref={turns}
             sx={{
               fontSize: "150%",
-              display: localPlayer !== undefined && !winnerName ? "flex" : "none",
+              display:
+                localPlayer !== undefined && localPlayer !== null && !winnerName
+                  ? "flex"
+                  : "none",
               fontWeight: 700,
             }}
           >
@@ -339,36 +395,34 @@ function App() {
         </Grid>
       </Grid>
 
-
-
       <Modal open={winnerModalOpen} disableEscapeKeyDown>
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: "30vmax",
-                    bgcolor: "background.paper",
-                    border: "2px solid #000",
-                    boxShadow: 24,
-                    p: 6,
-                    borderRadius: "15px",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      fontSize: "250%",
-                      fontFamily: "Kanit",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {winnerName ? winnerName : null}
-                  </Typography>
-                  </Box>
-                  </Modal>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "30vmax",
+            bgcolor: "background.paper",
+            border: "2px solid #000",
+            boxShadow: 24,
+            p: 6,
+            borderRadius: "15px",
+          }}
+        >
+          <Typography
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              fontSize: "250%",
+              fontFamily: "Kanit",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {winnerName ? winnerName : null}
+          </Typography>
+        </Box>
+      </Modal>
     </>
     // </SnackbarProvider>
   );

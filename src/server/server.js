@@ -8,27 +8,13 @@ const io = require("socket.io")(3000, {
     credentials: true,
   },
 });
-let usersCount = 0;
 let playerUserNames = {};
 let userNames;
 let timeoutId;
 io.on("connection", (socket) => {
-  if (usersCount >= 8) {
-    socket.disconnect();
-    console.log("too much users");
-    return;
-  }
   if (timeoutId) {
     clearTimeout(timeoutId);
   }
-  usersCount = usersCount + 1;
-  io.emit(
-    "connectedUsers",
-    true,
-    socket.id,
-    socket.handshake.address.substring(7)
-  );
-
   const setchartoplayers = () => {
     const charList = ["X", "O"];
     const randomnumtochoose = Math.floor(Math.random() * 2);
@@ -44,13 +30,26 @@ io.on("connection", (socket) => {
     return [p1turn, p2turn];
   };
 
-  socket.on("setUserName", (userName) => {
+  socket.on("setUserName", (userName, sessionID) => {
+    if (
+      io.sockets.adapter.rooms.get(sessionID) &&
+      io.sockets.adapter.rooms.get(sessionID).size > 1
+    ) {
+      socket.emit("sendError");
+      return;
+    }
+    socket.join(sessionID);
+    io.to(sessionID).emit("connectedUsers", true, userName);
     playerUserNames[socket.id] = {
       username: userName,
       id: socket.id,
       isLocal: userNames ? userNames.length % 2 === 0 : true,
+      sessionID: sessionID,
     };
-    userNames = Object.values(playerUserNames);
+    userNames = Object.values(playerUserNames).filter(
+      (player) => player.sessionID === sessionID
+    );
+    console.log(userNames.length);
     if (userNames.length === 2) {
       const sides = setchartoplayers();
       const turns = setstarterturn();
@@ -58,35 +57,167 @@ io.on("connection", (socket) => {
         userNames[pos].whatside = sides[pos];
         userNames[pos].ishesturn = turns[pos];
       }
-      io.emit("startGame", userNames);
+      io.to(sessionID).emit("startGame", userNames);
     }
   });
-  socket.on("sendTurn", (num, siman) => {
-    let foundUser = userNames.find((user) => user.whatside === siman);
-    let enemyUser = userNames.find((user) => user.whatside !== siman);
+  socket.on("sendTurn", (num, siman, sessionID) => {
+    let foundUser = Object.values(playerUserNames).find(
+      (player) => player.sessionID === sessionID && player.whatside === siman
+    );
+    let enemyUser = Object.values(playerUserNames).find(
+      (player) => player.sessionID === sessionID && player.whatside !== siman
+    );
+    if (!enemyUser) return;
     if (foundUser.ishesturn) {
-      foundUser.ishesturn = !foundUser.ishesturn;
-      enemyUser.ishesturn = !enemyUser.ishesturn;
-      io.emit("sendTurnBroadcast", num, siman, userNames);
+      foundUser.ishesturn = !foundUser?.ishesturn;
+      enemyUser.ishesturn = !enemyUser?.ishesturn;
+      io.to(sessionID).emit(
+        "sendTurnBroadcast",
+        num,
+        siman,
+        Object.values(playerUserNames).filter(
+          (player) => player.sessionID === sessionID
+        )
+      );
     }
   });
-  socket.on("checkwinner", (table) => {
-    for (let pos = 0; pos < userNames?.length; pos++) {
-    if((table[0].siman===userNames[pos].whatside && table[1].siman===userNames[pos].whatside && table[2].siman===userNames[pos].whatside) || (table[3].siman===userNames[pos].whatside && table[4].siman===userNames[pos].whatside && table[5].siman===userNames[pos].whatside) || (table[6].siman===userNames[pos].whatside && table[7].siman===userNames[pos].whatside && table[8].siman===userNames[pos].whatside) || (table[0].siman===userNames[pos].whatside && table[3].siman===userNames[pos].whatside && table[6].siman===userNames[pos].whatside) || (table[1].siman===userNames[pos].whatside && table[4].siman===userNames[pos].whatside && table[7].siman===userNames[pos].whatside) || (table[2].siman===userNames[pos].whatside && table[5].siman===userNames[pos].whatside && table[8].siman===userNames[pos].whatside) || (table[0].siman===userNames[pos].whatside && table[4].siman===userNames[pos].whatside && table[8].siman===userNames[pos].whatside) || (table[2].siman===userNames[pos].whatside && table[4].siman===userNames[pos].whatside && table[6].siman===userNames[pos].whatside)){
-      io.emit("winnerfound", userNames[pos]?.username);
-      break;
+  socket.on("checkwinner", (table, sessionID) => {
+    userNames = Object.values(playerUserNames).filter(
+      (player) => player.sessionID === sessionID
+    );
+    let count = 0;
+    for (let key in table) {
+      if (table[key].isActive) {
+        count++;
+      }
     }
+    for (
+      let pos = 0;
+      pos <
+      Object.values(playerUserNames).filter(
+        (player) => player.sessionID === sessionID
+      )?.length;
+      pos++
+    ) {
+      if (
+        (table[0].siman ===
+          Object.values(playerUserNames).filter(
+            (player) => player.sessionID === sessionID
+          )[pos].whatside &&
+          table[1].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside &&
+          table[2].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside) ||
+        (table[3].siman ===
+          Object.values(playerUserNames).filter(
+            (player) => player.sessionID === sessionID
+          )[pos].whatside &&
+          table[4].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside &&
+          table[5].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside) ||
+        (table[6].siman ===
+          Object.values(playerUserNames).filter(
+            (player) => player.sessionID === sessionID
+          )[pos].whatside &&
+          table[7].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside &&
+          table[8].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside) ||
+        (table[0].siman ===
+          Object.values(playerUserNames).filter(
+            (player) => player.sessionID === sessionID
+          )[pos].whatside &&
+          table[3].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside &&
+          table[6].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside) ||
+        (table[1].siman ===
+          Object.values(playerUserNames).filter(
+            (player) => player.sessionID === sessionID
+          )[pos].whatside &&
+          table[4].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside &&
+          table[7].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside) ||
+        (table[2].siman ===
+          Object.values(playerUserNames).filter(
+            (player) => player.sessionID === sessionID
+          )[pos].whatside &&
+          table[5].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside &&
+          table[8].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside) ||
+        (table[0].siman ===
+          Object.values(playerUserNames).filter(
+            (player) => player.sessionID === sessionID
+          )[pos].whatside &&
+          table[4].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside &&
+          table[8].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside) ||
+        (table[2].siman ===
+          Object.values(playerUserNames).filter(
+            (player) => player.sessionID === sessionID
+          )[pos].whatside &&
+          table[4].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside &&
+          table[6].siman ===
+            Object.values(playerUserNames).filter(
+              (player) => player.sessionID === sessionID
+            )[pos].whatside)
+      ) {
+        io.to(sessionID).emit(
+          "winnerfound",
+          Object.values(playerUserNames).filter(
+            (player) => player.sessionID === sessionID
+          )[pos]?.username
+        );
+        break;
+      } else if (count === 9) {
+        io.to(sessionID).emit("winnerfound", true);
+        count = 0;
+      }
     }
   });
 
   socket.on("disconnect", () => {
-    usersCount = usersCount - 1;
-    userNames = null;
-    playerUserNames = {};
-    io.emit("connectedUsers", false, socket.id);
-    timeoutId = setTimeout(() => {
-      socket.broadcast.emit("reloadPage");
-    }, 4000);
+    const sessionID = playerUserNames[socket.id]?.sessionID;
+    const userName = playerUserNames[socket.id]?.username;
+    playerUserNames = Object.values(playerUserNames).filter(
+      (player) => player.id !== socket.id
+    );
+    io.to(sessionID).emit("connectedUsers", false, userName);
   });
 });
 
