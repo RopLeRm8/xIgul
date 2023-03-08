@@ -26,7 +26,8 @@
 
 - Navigate to the project's directory (/xIgul)
 - Enter the following command (npm install/yarn add) to download all the required packages on the local PC.
-- Enter the following command (npm run play/yarn run play) - NODEJS REQUIRED TO BE DOWNLOADED! OR YARN OPTIONALLY
+- Enter the following command (npm run play/yarn run play)
+- NODEJS REQUIRED TO BE DOWNLOADED! OR YARN OPTIONALLY
 
 #### [NODEJS INSTALLATION](https://nodejs.org/en/)
 
